@@ -1,7 +1,8 @@
 ﻿// Author: Willem Vidler
 // Date: January 20th 2021
+// Updated: February 22nd 2021
 // Description: 
-// This program takes 7 days worth of units shipped and gives you the average
+// This program takes 7 days worth of units shipped and gives you the average for 3 employees, and then the average of all of them together 
 
 using System;
 using System.Collections.Generic;
@@ -17,13 +18,27 @@ namespace AverageUnitsShipped
 {
     public partial class formAverageUnitsShipped : Form
     {
+        const int NumberOfEmployees = 3;
+        const int NumberOfDays = 7;
+
         // Class-level variable declerations
-        int currentDay = 1;
-        int currentTotal = 0;
+        int currentDay = 0;
+        int currentEmployee = 0;
+        double totalAverage = 0;
+
+        int[,] entryArray = new int[NumberOfEmployees, NumberOfDays];
+
+        // Make arrays for output
+        TextBox[] employeeTextBoxes;
+        Label[] employeeAverages;
 
         public formAverageUnitsShipped()
         {
             InitializeComponent();
+
+            // Making the arrays
+            employeeTextBoxes = new TextBox[] { textboxPastEntries, textBoxPastEntries2, textBoxPastEntries3};
+            employeeAverages = new Label[] { labelAverageOutput, labelAverageOutput2, labelAverageOutput3};
         }
 
         /// <summary>
@@ -37,53 +52,69 @@ namespace AverageUnitsShipped
             // Declare constants and variables
             const int MinimumUnits = 0;
             const int MaximumUnits = 5000;
-            const int MaximumDays = 7;
-            int lastEntry;
 
-            // Validate that the number entered is a whole number.
-            if (int.TryParse(textboxEntryNumbers.Text, out lastEntry))
+            // Validate that the number entered is a whole number
+            if (int.TryParse(textboxEntryNumbers.Text, out entryArray[currentEmployee, currentDay]))
             {
                 // Validate that the number entered is between 0 and 5000
-                if (lastEntry >= MinimumUnits && lastEntry <= MaximumUnits)
+                if (entryArray[currentEmployee, currentDay] >= MinimumUnits && entryArray[currentEmployee, currentDay] <= MaximumUnits)
                 {
-                    // If the entry is valid
-                    // Add the newest entry to the list of past entries
-                    textboxPastEntries.Text += lastEntry + "\r\n";
-                    // Increment currentTotal by the entry
-                    currentTotal += lastEntry;
-                    // Increment the day by 1
-                    currentDay++;
-                    // Clear the entry textbox
-                    textboxEntryNumbers.Clear();
+                    // Enter the current entry in the current employee's textbox
+                    employeeTextBoxes[currentEmployee].Text += entryArray[currentEmployee, currentDay] + "\r\n";
 
-                    // If the day is > 7
-                    if (currentDay > MaximumDays)
+                    // Check if we have entered day 7.
+                    if (currentDay >= NumberOfDays - 1)
                     {
-                        //Determine the average
-                        double averageUnits;
-                        averageUnits = (double)currentTotal / (double)MaximumDays;
-                        // Output the result
-                        labelAverageOutput.Text = "Average per Day: " + Math.Round(averageUnits, 2);
-                        // Disable controls
+                        int employeeTotal = 0;
+
+                        // Calculate and display the employee total
+                        for (int day = 0; day < NumberOfDays; day++)
+                        {
+                            employeeTotal += entryArray[currentEmployee, day];
+                        }
+
+                        // Calculate and display the employee's average in their output label.
+                        employeeAverages[currentEmployee].Text = "Average: " + Math.Round((double)employeeTotal / NumberOfDays, 2);
+                        totalAverage += Math.Round((double)employeeTotal);
+                        // Now at day 7, reset and go ot the next employee
+                        currentDay = 0;
+                        currentEmployee++;
+                                              
+                    }else
+                    {
+                        //Adjust the day and set the day counter
+                        currentDay++;
+                        
+                    }
+
+                    // Check if we have entered all employees.
+                    if (currentEmployee >= NumberOfEmployees)
+                    {
+                        //Calculate and display the overall average
+                        labelTotalAverageOutput.Text = "Average per Day: " + Math.Round(totalAverage / (NumberOfDays * NumberOfEmployees), 2);
+
+                        currentDay = 0;
+                        currentEmployee = 0;
+
+                        // Disable input controls and focus reset
                         textboxEntryNumbers.Enabled = false;
                         buttonEnter.Enabled = false;
-                        // Set focus to the reset button.
                         buttonReset.Focus();
-                    }
-                    // If the day is <= 7
-                    else
+
+
+                    }else
                     {
-                        // Display the current day  
-                        labelDay.Text = "Day " + currentDay;
-                        // Set focus to the new entry textbox
-                        textboxEntryNumbers.Focus();
+                        labelDay.Text = "Day " + (currentDay + 1);
                     }
+
+                    textboxEntryNumbers.Clear();
+                    
 
                 }
                 else
                 {
                     // The value entered is less than 0 or greater than 5000
-                    MessageBox.Show("Enter a value between " + MinimumUnits + 
+                    MessageBox.Show("Enter a value between " + MinimumUnits +
                         " and " + MaximumUnits + ".", "Invalid Entry!");
                     textboxEntryNumbers.SelectAll();
                     textboxEntryNumbers.Focus();
@@ -96,6 +127,8 @@ namespace AverageUnitsShipped
                 textboxEntryNumbers.SelectAll();
                 textboxEntryNumbers.Focus();
             }
+            
+
         }
 
         /// <summary>
@@ -108,11 +141,17 @@ namespace AverageUnitsShipped
             // Clear the input and output fields.
             textboxEntryNumbers.Clear();
             textboxPastEntries.Clear();
+            textBoxPastEntries2.Clear();
+            textBoxPastEntries3.Clear();
             labelAverageOutput.Text = string.Empty;
+            labelAverageOutput2.Text = string.Empty;
+            labelAverageOutput3.Text = string.Empty;
+            labelTotalAverageOutput.Text = string.Empty;
 
             // Reset the global variables.
-            currentDay = 1;
-            currentTotal = 0;
+            totalAverage = 0;
+            currentDay = 0;           
+            labelDay.Text = "Day " + (currentDay + 1);           
 
             // Re-enable any controls that may be disabled.
             textboxEntryNumbers.Enabled = true;
